@@ -1,0 +1,43 @@
+### Root Status Check
+GET http://localhost:8000/
+Accept: application/json
+
+### DTC Search (Fast-Path)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "P2261 고장코드에 대해 설명해줘"
+}
+
+### Cause Analysis (Slow-Path)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "그랜저 IG 엔진 진동 원인이 뭐야?"
+}
+
+### Trend Analysis (Slow-Path + Date)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "최근 6개월간 변속기 충격 발생 추이를 알려줘"
+}
+
+### Similar Case (Slow-Path)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "아반떼 AD 시동 불량 사례 찾아줘"
+}
+
+### Top Symptom in January (Statistical Query)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "1월 가장 많이 발생한 클레임 증상이 뭐야"
+}
