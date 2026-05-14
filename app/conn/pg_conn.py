@@ -11,12 +11,21 @@ class PostgresClient:
         self.dsn = os.getenv("PG_DSN")
 
     async def connect(self):
+        if not self.dsn:
+            print("WARNING: PG_DSN is not set in .env. PostgreSQL logging will be disabled.")
+            return
+
         if not self.pool:
-            self.pool = await asyncpg.create_pool(
-                dsn=self.dsn,
-                min_size=1,
-                max_size=10
-            )
+            try:
+                self.pool = await asyncpg.create_pool(
+                    dsn=self.dsn,
+                    min_size=1,
+                    max_size=10
+                )
+                print("Successfully connected to PostgreSQL.")
+            except Exception as e:
+                print(f"WARNING: Failed to connect to PostgreSQL: {e}")
+                self.pool = None
 
     async def close(self):
         if self.pool:
