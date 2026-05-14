@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from app.api.search import router as search_router
 from app.conn.es_conn import es_client
+from app.conn.pg_conn import pg_client
 
 class UnicodeJSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8" # 헤더에 utf-8 명시
@@ -21,10 +22,12 @@ app = FastAPI(title="Elastic Hybrid Search API", default_response_class=UnicodeJ
 @app.on_event("startup")
 async def startup_event():
     await es_client.connect()
+    await pg_client.connect()
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await es_client.close()
+    await pg_client.close()
 
 @app.get("/")
 async def root():
