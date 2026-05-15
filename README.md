@@ -1,4 +1,4 @@
-# 🚀 Elastic Hybrid Search 기반 의도 분석 및 정비 데이터 검색 API (v1.3)
+# 🚀 Elastic Hybrid Search 기반 의도 분석 및 정비 데이터 검색 API (v0.01)
 
 차량 정비 데이터(Claims) 및 고장코드(DTC)를 분석하여 사용자 질의의 의도를 파악하고, **Aho-Corasick 고속 패턴 매칭**, **PostgreSQL 로그 캐싱**, 그리고 **LLM 기반 하이브리드 검색**을 결합하여 최상의 성능과 안정성을 제공하는 차세대 검색 시스템입니다.
 
