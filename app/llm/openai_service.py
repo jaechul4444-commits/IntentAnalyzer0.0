@@ -23,7 +23,8 @@ class OpenAIService:
         - date_info: natural language date description. 
           * CRITICAL: If the user mentions a month (e.g., "1월"), extract it here.
           * If they mention "last 6 months", "recently", "last year", extract it here.
-        - intent: one of [cause_analysis, trend_analysis, similar_case, supplier_analysis, dtc_analysis]
+        - intent: one of [cause_analysis, trend_analysis, trend_prediction, similar_case, supplier_analysis, dtc_analysis]
+          * Use "trend_prediction" for queries asking about future forecasts, predictions, or what might happen next.
         - sort_order: either "asc" or "desc". 
           * Use "desc" for queries asking for "most", "top", "frequent".
           * Use "asc" for queries asking for "least", "minimum", "rare".
