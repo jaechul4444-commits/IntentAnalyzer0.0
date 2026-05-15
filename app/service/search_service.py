@@ -53,19 +53,32 @@ class SearchService:
             buckets = response["aggregations"]["top_symptoms"]["buckets"]
             top_symptoms = [{"symptom": b["key"], "count": b["doc_count"]} for b in buckets]
 
+        # 결과에서 벡터 데이터 제외 (가독성 및 응답 크기 최적화)
+        for hit in result_hits:
+            if isinstance(hit, dict):
+                hit.pop("content_vector", None)
+                hit.pop("symptom_vector", None)
+
+        # 5. Generate Natural Language Answer
+        from app.llm.openai_service import openai_service
+        answer = await openai_service.generate_answer(query, result_hits)
+        
         result = {
             "intent": intent,
             "route": analysis_result["route"],
             "parameters": params,
+            "answer": answer, # 자연어 답변 추가
             "results": result_hits,
             "top_statistics": top_symptoms,
-            "total": total_count
+            "total": total_count,
+            "source": analysis_result.get("source", "unknown")
         }
 
         # 5. Log the search activity (비동기 저장)
         try:
             from datetime import datetime
             log_index = os.getenv("ES_INDEX_LOGS", "jjc_search_logs_index")
+            # ES 로그 저장 시에는 벡터 포함 가능 (선택 사항)
             await es.index(index=log_index, document={
                 "timestamp": datetime.now().isoformat(),
                 "query": query,
@@ -84,7 +97,7 @@ class SearchService:
 
     def _build_hybrid_query(self, analysis):
         params = analysis["parameters"]
-        embedding = analysis["embedding"]
+        embedding = analysis.get("embedding")
         
         # None 값이 포함될 수 있으므로 필터링 후 join
         symptom_list = params.get("symptom") or []
@@ -94,7 +107,7 @@ class SearchService:
         main_query = {
             "bool": {
                 "must": [
-                    {"range": {"확정일자": {"gte": params["start_date"], "lte": params["end_date"]}}}
+                    {"range": {"확정일자": {"gte": params.get("start_date") or "20200101", "lte": params.get("end_date") or "20261231"}}}
                 ]
             }
         }
@@ -108,24 +121,31 @@ class SearchService:
         else:
             main_query["bool"]["must"].append({"match_all": {}})
 
+        # 기본 쿼리 구조
+        sort_order = params.get("sort_order") or "desc"
         query = {
             "query": main_query,
-            "knn": {
-                "field": "content_vector", # 실제 벡터 필드명
-                "query_vector": embedding,
-                "k": 10,
-                "num_candidates": 100
-            },
             "aggs": {
                 "top_symptoms": {
                     "terms": {
-                        "field": "상세내용.keyword", # 통계용 필드명
-                        "size": 10
+                        "field": "상세내용.keyword",
+                        "size": 10,
+                        "order": {"_count": sort_order}
                     }
                 }
             },
             "size": 10
         }
+
+        # Embedding이 있을 경우에만 knn 절 추가 (VALUE_NULL 오류 방지)
+        if embedding and any(v != 0.0 for v in embedding):
+            query["knn"] = {
+                "field": "content_vector",
+                "query_vector": embedding,
+                "k": 10,
+                "num_candidates": 100
+            }
+            
         return query
 
 search_service = SearchService()

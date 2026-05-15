@@ -24,6 +24,10 @@ class OpenAIService:
           * CRITICAL: If the user mentions a month (e.g., "1월"), extract it here.
           * If they mention "last 6 months", "recently", "last year", extract it here.
         - intent: one of [cause_analysis, trend_analysis, similar_case, supplier_analysis, dtc_analysis]
+        - sort_order: either "asc" or "desc". 
+          * Use "desc" for queries asking for "most", "top", "frequent".
+          * Use "asc" for queries asking for "least", "minimum", "rare".
+          * Default to "desc".
         
         If a value is not found, use null.
         """
@@ -68,4 +72,35 @@ class OpenAIService:
             "cause": data.get("cause")
         }
 
+    async def generate_answer(self, query: str, search_results: list):
+        """
+        Generate a natural language answer based on search results.
+        """
+        if not search_results:
+            return "검색 결과가 없습니다. 다른 키워드로 검색해 보세요."
+
+        system_prompt = """
+        You are a helpful vehicle maintenance assistant. 
+        Based on the provided search results (maintenance logs), answer the user's question in a natural, friendly, and professional tone in Korean.
+        Synthesize the information to provide a clear summary of the causes, symptoms, or trends requested.
+        If there are multiple cases, group similar ones together.
+        """
+        
+        # 가독성을 위해 일부 필드만 요약해서 컨텍스트로 제공
+        context = []
+        for res in search_results[:5]: # 상위 5건만 사용
+            context.append(f"- 차종: {res.get('차종')}, 부품: {res.get('부품명')}, 현상: {res.get('현상')}, 내용: {res.get('상세내용') or res.get('RO 특기사항')}")
+        
+        context_str = "\n".join(context)
+        
+        response = await self.client.chat.completions.create(
+            model=self.gpt_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"User Question: {query}\n\nSearch Results:\n{context_str}"}
+            ]
+        )
+        return response.choices[0].message.content
+
 openai_service = OpenAIService()
+

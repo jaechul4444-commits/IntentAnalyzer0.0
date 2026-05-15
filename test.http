@@ -41,3 +41,35 @@ Content-Type: application/json
 {
   "query": "1월 가장 많이 발생한 클레임 증상이 뭐야"
 }
+
+### Statistical Query (Top counts)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "최근 6개월간 가장 많이 발생한 증상이 뭐야"
+}
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "2월 가장 크리티컬 한 문제를 가진 클레임 알려줘"
+}
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "1월 가장 많은 클레임을 발생시킨 증상이 뭐고 몇건이야"
+}
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "1월 가장 적은 클레임을 발생시킨 증상이 뭐고 몇건이야"
+}

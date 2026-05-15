@@ -21,3 +21,8 @@ Thumbs.db
 # Project specific
 scripts/index_info.json
 *.log
+
+# Build artifacts
+build/
+dist/
+*.spec
