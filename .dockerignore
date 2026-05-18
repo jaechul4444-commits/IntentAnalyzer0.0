@@ -1,0 +1,18 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# Git
+.git
+.gitignore
+
+# Documentation & IDEs
+.vscode/
+.idea/
+DEPLOYMENT_GUIDE.md
+PROGRAM_SPECIFICATION.md
+test.http

@@ -73,3 +73,101 @@ Content-Type: application/json
 {
   "query": "1월 가장 적은 클레임을 발생시킨 증상이 뭐고 몇건이야"
 }
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "가장 마지막 클레임 정보 알려줘"
+}
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "앞으로 일어날 클레임들 예상해줘"
+}
+
+### Test User Query (Duplicate)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "여름쯤 많이 일어나는 클레임은 어떤게 있지?"
+}
+
+### RDB Direct Query (rdb-path - Keyword Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "실시간 RDB에서 그랜저 시동 꺼짐 관련 정형 데이터를 직접 조회해줘"
+}
+
+### RDB Direct Query via VIN (rdb-path - Regex Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "미국에서 진행된 투싼 차량에 대한 마지막 클레임 원장을 조회해줘"
+}
+
+### RDB Direct Query via LLM Classification (rdb-path - Semantic Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "그랜저 시동 불량 클레임의 상세 내역과 결제 금액 목록 전부 뽑아줘"
+}
+
+### RDB Direct Query via LLM Classification (rdb-path - Semantic Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "VIN 번호가 knanc81abss021166 인 차량의 정비 이력 알려줘"
+}
+
+### RDB Direct Query via LLM Classification (rdb-path - Semantic Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "차대번호 284102M419 인 차량의 정비 이력 알려줘"
+}
+
+### RDB Direct Query via LLM Classification (rdb-path - Semantic Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "시리얼넘버가 271636인 클래임 알려줘"
+}
+
+### RDB Direct Query via LLM Classification (rdb-path - Semantic Trigger)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "25년 6월 클래임 추이 알려줘"
+}
+
+### 🔒 Authority Guard - REJECT Scenario (Standard Engineer Role denied RDB Access)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "그랜져 엔진 소음 발생 조치 방법 알려줘",
+  "user_role": "engineer"
+}
+
+### 🔑 Authority Guard - ALLOW Scenario (Master Mechanic Authorized RDB Access)
+POST http://localhost:8000/api/data/search
+Content-Type: application/json
+
+{
+  "query": "VIN 번호가 knanc81abss021166 인 차량의 정비 이력 알려줘",
+  "user_role": "master_mechanic"
+}

@@ -1,0 +1,4 @@
+FROM docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+
+# Install Nori Korean Morphological Analyzer plugin
+RUN bin/elasticsearch-plugin install --batch analysis-nori

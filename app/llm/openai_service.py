@@ -29,6 +29,10 @@ class OpenAIService:
           * Use "desc" for queries asking for "most", "top", "frequent".
           * Use "asc" for queries asking for "least", "minimum", "rare".
           * Default to "desc".
+        - search_type: either "semantic" or "structured".
+          * Use "structured" if the user wants specific, raw tabular claim rows, details, list of claims/records, receipts, campaign records, or specific details of a single vehicle.
+          * Use "semantic" if the user wants general causes, summaries, advice, trend charts, predictions, or semantic case analysis.
+          * Default to "semantic".
         
         If a value is not found, use null.
         """
@@ -42,6 +46,7 @@ class OpenAIService:
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)
+
 
     async def get_embedding(self, text: str):
         """
@@ -90,7 +95,13 @@ class OpenAIService:
         # 가독성을 위해 일부 필드만 요약해서 컨텍스트로 제공
         context = []
         for res in search_results[:5]: # 상위 5건만 사용
-            context.append(f"- 차종: {res.get('차종')}, 부품: {res.get('부품명')}, 현상: {res.get('현상')}, 내용: {res.get('상세내용') or res.get('RO 특기사항')}")
+            if isinstance(res, dict):
+                car_model = res.get('차종') or res.get('PRJ_NM') or res.get('CAR_TYPE') or '알수없음'
+                part_name = res.get('부품명') or res.get('ITMNM') or res.get('MAP_ITMNM_NAME') or '알수없음'
+                symptom = res.get('현상') or res.get('SYM_NM') or res.get('MAP_DESC_NAME') or res.get('SYM_CD') or '알수없음'
+                details = res.get('상세내용') or res.get('RO 특기사항') or res.get('SIG_CONT') or res.get('SVY_TX') or res.get('DTL_TX') or '내용 없음'
+                context.append(f"- 차종: {car_model}, 부품: {part_name}, 현상: {symptom}, 내용: {details}")
+
         
         context_str = "\n".join(context)
         

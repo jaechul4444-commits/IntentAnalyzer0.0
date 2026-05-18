@@ -1,3 +1,11 @@
+import sys
+import io
+
+# Windows 콘솔 한글(CP949) 및 이모지 출력 시 인코딩 오류(UnicodeEncodeError) 방지 패치
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 import json
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
