@@ -76,6 +76,43 @@ ES_HOST=http://localhost:9200
 PG_DSN=postgresql://postgres:password@localhost:5432/intent_db
 ```
 
+### ⚠️ [중요] 89번(FastAPI 앱) & 99번(Elasticsearch) 분리 서버 환경 배포 주의사항
+
+배포하려는 서버가 **89번 서버(애플리케이션)**이고, Elasticsearch는 이미 **99번 서버**에 따로 구축되어 가동 중인 경우, 아래 세팅 및 방화벽 규칙을 반드시 사전에 적용하셔야 정상 연동됩니다.
+
+#### 1. 89번 서버의 `.env` 환경 변수 수정
+89번 서버의 `.env` 파일 내 `ES_HOST` 주소를 **99번 서버의 IP**로 변경합니다.
+```ini
+ES_HOST=http://<99번_서버_IP>:9200
+```
+
+#### 2. 89번 서버의 `docker-compose.yml` 리소스 최적화 수정
+89번 서버에서는 로컬 Elasticsearch 컨테이너를 구동할 필요가 전혀 없으므로 다음과 같이 주석 처리/삭제합니다:
+* **의존성 제거**: `web` 서비스 내부 `depends_on` 목록에서 `elasticsearch:` 하위 2개 라인을 주석 처리 또는 삭제합니다.
+* **환경 변수 오버라이드 해제**: `web` 서비스 내부 `environment`의 `ES_HOST` 라인을 주석 처리하여 `.env`에 정의한 99번 서버 주소가 컨테이너 내부에 자연스럽게 로드되도록 합니다.
+* **서버 자원 절약**: 파일 맨 아래에 정의된 `elasticsearch:` 서비스 블록 전체와 `volumes:` 내부의 `esdata:` 지정을 삭제하거나 주석 처리하여 89번 서버의 불필요한 메모리/디스크 낭비를 막아줍니다.
+
+#### 3. 99번 서버(Elasticsearch)의 네트워크 및 포트 개방 설정
+89번 서버에서 99번 서버의 ES 서비스로 통신이 가능해야 합니다:
+* **방화벽 설정**: 99번 서버의 방화벽(UFW 또는 보안그룹)에서 **89번 서버의 IP**에 대해 **`9200` 포트(인바운드)를 허용**해 줍니다.
+  ```bash
+  # 99번 서버(Ubuntu)의 UFW 예시
+  sudo ufw allow from <89번_서버_IP> to any port 9200 proto tcp
+  ```
+* **네트워크 바인딩 주소 검증**: 99번 서버의 `/etc/elasticsearch/elasticsearch.yml` 파일 내에 `network.host` 설정이 `127.0.0.1`로 묶여 있다면, 외부 접근이 불가능합니다. 이를 사설 IP 주소 또는 `0.0.0.0`으로 지정해 주셔야 합니다.
+
+#### 4. 99번 서버의 Nori 형태소 분석기 설치 유무 확인
+99번 서버의 Elasticsearch에 **Nori(노리) 형태소 분석기 플러그인**이 이미 깔려 있어야 한글 의도 분석이 동작합니다.
+* **설치 확인 (99번 서버에서 실행)**:
+  ```bash
+  curl -s http://localhost:9200/_nodes/plugins | grep analysis-nori
+  ```
+* **미설치 시 추가 방법 (99번 서버에서 실행)**:
+  ```bash
+  sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-nori
+  sudo systemctl restart elasticsearch
+  ```
+
 ---
 
 ## 4. Docker Compose 빌드 및 실행

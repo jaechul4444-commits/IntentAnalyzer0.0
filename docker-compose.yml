@@ -11,15 +11,18 @@ services:
     env_file:
       - .env
     environment:
-      # Docker 내부 네트워크 통신을 위해 호스트 주소를 컨테이너 서비스명으로 덮어씁니다.
-      - ES_HOST=http://elasticsearch:9200
+      # [로컬 ES 사용 시에만 활성화] 내부 네트워크 통신용 주소
+      # ⚠️ 99번 서버 등 외부 ES를 사용하시는 경우, 아래 라인을 주석 처리하고 .env 파일에 'ES_HOST=http://99번IP:9200'을 입력하세요.
+      # - ES_HOST=http://elasticsearch:9200
       - PG_DSN=postgresql://postgres:password@db:5432/intent_db
     depends_on:
       db:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
+      # ⚠️ 외부 ES(99번)를 사용하시는 경우, 아래 elasticsearch 의존성 부분을 삭제하거나 주석 처리해야 89번 서버에서 단독으로 정상 구동됩니다.
+      # elasticsearch:
+      #   condition: service_healthy
     restart: always
+
 
   db:
     image: postgres:14
