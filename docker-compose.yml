@@ -7,63 +7,61 @@ services:
       dockerfile: Dockerfile
     container_name: analyzer-web
     ports:
-      - "8000:8000"
+      - "8080:8000" # 8000번 충돌을 피해 외부 포트를 8080으로 안전하게 포워딩 완료!
     env_file:
       - .env
     environment:
-      # [로컬 ES 사용 시에만 활성화] 내부 네트워크 통신용 주소
-      # ⚠️ 99번 서버 등 외부 ES를 사용하시는 경우, 아래 라인을 주석 처리하고 .env 파일에 'ES_HOST=http://99번IP:9200'을 입력하세요.
+      # ⚠️ 99번 서버 등 외부 ES를 사용하므로, 아래 ES_HOST를 주석 처리하고 .env 파일에 'ES_HOST=http://99번IP:9200'을 입력해 사용합니다.
       # - ES_HOST=http://elasticsearch:9200
       - PG_DSN=postgresql://postgres:password@db:5432/intent_db
     depends_on:
       db:
         condition: service_healthy
-      # ⚠️ 외부 ES(99번)를 사용하시는 경우, 아래 elasticsearch 의존성 부분을 삭제하거나 주석 처리해야 89번 서버에서 단독으로 정상 구동됩니다.
-      # elasticsearch:
-      #   condition: service_healthy
     restart: always
-
 
   db:
     image: postgres:14
     container_name: analyzer-db
     environment:
-      - POSTGRES_DB=intent_db
+      - POSTGRES_DB=intent_db      # [수정] DB명을 웹 연동 주소(intent_db) 및 헬스 체크와 통일했습니다.
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=password # 배포 시 실제 비밀번호로 변경하세요.
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"              # [수정] 89번 호스트 서버에 이미 5432 포트의 Postgres가 돌고 있으므로, 
+                                   # 외부 노출을 막아 충돌을 방지합니다. (도커 내부망 db:5432로는 web 컨테이너와 자동 통신됨)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d intent_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d intent_db"] # [수정] 위에서 지정한 intent_db에 맞게 헬스 체크 대상 수정
       interval: 5s
       timeout: 5s
       retries: 5
     restart: always
 
-  elasticsearch:
-    build:
-      context: .
-      dockerfile: Dockerfile.elasticsearch
-    container_name: analyzer-es
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g" # 서버 성능에 맞게 조절 (최소 512m 권장)
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
+  # [리소스 절약 추천] 99번 서버의 Elasticsearch를 사용하므로 89번 서버의 로컬 ES 컨테이너는 주석 처리합니다.
+  # 만약 로컬 ES를 다시 띄워야 한다면 아래 주석을 해제해 주세요.
+  # elasticsearch:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.elasticsearch
+  #   container_name: analyzer-es
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "9200:9200"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: always
 
 volumes:
   pgdata:
     driver: local
-  esdata:
-    driver: local
+  # esdata:
+  #   driver: local
