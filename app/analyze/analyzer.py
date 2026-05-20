@@ -142,7 +142,26 @@ class IntentAnalyzer:
             dtc_match = self.dtc_pattern.search(query.upper())
             if dtc_match:
                 parameters["dtc_code"] = dtc_match.group()
-                print(f"\n[Branch 1 Hit]: RDB 규칙 적중 (차대번호/RDB 키워드) -> rdb-path 분기")
+            print(f"\n[Branch 1 Hit]: RDB 규칙 적중 (차대번호/RDB 키워드) -> rdb-path 분기")
+
+            # PostgreSQL Logging (RDB-path에서도 로그 저장 추가!)
+            try:
+                tokens, token_list = await get_nori_tokens(query)
+                try:
+                    embedding = await openai_service.get_embedding(query)
+                except Exception as emb_err:
+                    print(f"Embedding error in rdb-path: {emb_err}")
+                    embedding = [0.0] * 1536
+                await pg_client.save_query_log(
+                    query_text=query,
+                    tokens=tokens,
+                    token_list=token_list,
+                    intent=matched_intent or "similar_case",
+                    parameters=parameters,
+                    query_vector=embedding
+                )
+            except Exception as e:
+                print(f"Logging Error in rdb-path: {e}")
 
             return {
                 "route": "rdb-path",
@@ -173,6 +192,26 @@ class IntentAnalyzer:
         if dtc_match:
             dtc_code = dtc_match.group()
             print(f"\n[Branch 3 Hit]: DTC 고장코드 패턴 탐지 -> fast-path 분기")
+
+            # PostgreSQL Logging (Fast-path에서도 로그 저장 추가!)
+            try:
+                tokens, token_list = await get_nori_tokens(query)
+                try:
+                    embedding = await openai_service.get_embedding(query)
+                except Exception as emb_err:
+                    print(f"Embedding error in fast-path: {emb_err}")
+                    embedding = [0.0] * 1536
+                await pg_client.save_query_log(
+                    query_text=query,
+                    tokens=tokens,
+                    token_list=token_list,
+                    intent="dtc_analysis",
+                    parameters={"dtc_code": dtc_code},
+                    query_vector=embedding
+                )
+            except Exception as e:
+                print(f"Logging Error in fast-path: {e}")
+
             return {
                 "route": "fast-path",
                 "intent": "dtc_analysis",

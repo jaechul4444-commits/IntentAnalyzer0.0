@@ -1,8 +1,8 @@
 # 프로그램 정의서 (Program Specification)
 
 **프로젝트 명**: Elastic Hybrid Search 기반 의도 분석 및 정비 데이터 검색 시스템  
-**시스템 버전**: v1.4  
-**작성일**: 2026-05-18  
+**시스템 버전**: v1.5  
+**작성일**: 2026-05-20  
 **상태**: 최종 승인 (Production Ready)
 
 ---
@@ -81,12 +81,14 @@ flowchart TD
     RDB_Direct --> RDBSchemas{DB 스키마 존재 여부}:::target
     RDBSchemas -- "존재 (PQMLIB)" --> RDB_Complex["대형 JOIN 쿼리 실행"]:::target
     RDBSchemas -- "부재" --> RDB_Fallback["public.hqm_csrs1000 단일 테이블 폴백"]:::target
+    
+    %% Final Answer Summarization (제거됨: 챗봇 엔진으로 이관)
+    ES_Agg --> FinalSummary["빠른 JSON 직렬화 (LLM 응답 합성 배제)"]:::target
     RDB_Complex --> FinalSummary
     RDB_Fallback --> FinalSummary
-
-    FinalSummary["8. GPT-4o 자연어 요약 답변 생성"]:::llm
-    FinalSummary --> LogES["ES 검색 이력 로깅"]:::es
-    LogES --> FinalResult(["최종 JSON 결과 반환"])
+    
+    FinalSummary --> PG_Log["PG user_query_logs 로그 저장"]:::pg
+    PG_Log --> FinalResult(["최종 JSON 결과 반환 (챗봇 엔진에서 렌더링)"])
 
     %% 키워드 동적 동기화
     ESQueryExec -.->|주기적 / 최초 1회| DynamicSync["ES Term Aggregations 기반 <br> Aho-Corasick 키워드 사전 업데이트"]:::es
@@ -324,7 +326,7 @@ sequenceDiagram
 ```json
 {
   "intent": "판단된 의도 (dtc_analysis | trend_analysis | cause_analysis | similar_case | trend_prediction)",
-  "route": "처리 경로 (fast-path | slow-path)",
+  "route": "처리 경로 (fast-path | slow-path | rdb-path)",
   "parameters": {
     "symptom": ["추출된 증상 목록"],
     "model": "추출된 차종 명",
@@ -332,7 +334,7 @@ sequenceDiagram
     "start_date": "YYYYMMDD 형식 시작일",
     "end_date": "YYYYMMDD 형식 종료일"
   },
-  "answer": "GPT-4o가 정비 이력을 기반으로 종합 서술해 준 자연어 요약 답변 (Korean)",
+  "answer": "", // v1.5부터 제거됨 (챗봇 엔진에서 즉시 렌더링)
   "results": [
     {
       "차종": "그랜저 IG",
@@ -372,7 +374,7 @@ sequenceDiagram
   "parameters": {
     "dtc_code": "P2261"
   },
-  "answer": "DTC 고장코드 P2261은 바이패스 밸브 제어 회로의 기계적 오작동을 의미합니다. 주로 터보차저 바이패스 밸브 고장 또는 솔레노이드 밸브 불량으로 인해 발생합니다.",
+  "answer": "",
   "results": [
     {
       "dtc_code": "P2261",
@@ -405,7 +407,7 @@ sequenceDiagram
     "start_date": "20251118",
     "end_date": "20260518"
   },
-  "answer": "그랜저 차종의 최근 6개 월 분석 결과, 실린더 헤드 진동 및 변속기 충격 관련 현상이 상위를 차지했습니다. 세부적으로는 가변 밸브 타이밍 센서 교체가 권장됩니다.",
+  "answer": "",
   "results": [
     {
       "차종": "그랜저",

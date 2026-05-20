@@ -301,16 +301,14 @@ FROM
                 hit.pop("content_vector", None)
                 hit.pop("symptom_vector", None)
 
-        # 5. Generate Natural Language Answer
-        from app.llm.openai_service import openai_service
-        answer = await openai_service.generate_answer(query, result_hits)
-
+        # 5. Skip LLM Natural Language Answer Generation (Delegated to Chatbot Engine)
+        answer = ""
         
         result = {
             "intent": intent,
             "route": analysis_result["route"],
             "parameters": params,
-            "answer": answer, # 자연어 답변 추가
+            "answer": answer, # 자연어 답변 제거 (챗봇 엔진에서 포맷팅)
             "results": result_hits,
             "top_statistics": top_symptoms,
             "total": total_count,

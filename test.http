@@ -168,6 +168,15 @@ POST http://localhost:8000/api/data/search
 Content-Type: application/json
 
 {
-  "query": "VIN 번호가 knanc81abss021166 인 차량의 정비 이력 알려줘",
+  "query": "그랜저 시동 지연 클레임 통계 보여줘",
+  "user_role": "master_mechanic"
+}
+
+### 🔑 Authority Guard - ALLOW Scenario (Master Mechanic Authorized RDB Access)
+POST http://192.168.200.89:8080/api/data/search
+Content-Type: application/json
+
+{
+  "query": "그랜저 시동 지연 클레임 통계 보여줘",
   "user_role": "master_mechanic"
 }
