@@ -6,3 +6,4 @@ python-dotenv
 pydantic
 aiohttp
 asyncpg
+pyahocorasick
